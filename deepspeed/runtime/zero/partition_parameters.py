@@ -836,7 +836,7 @@ class Init(InsertPostInitMethodToModuleSubClasses):
             if len(params) == 1:
                 # have an opportunity to avoid some intermediate memory allocations
                 param, = params
-                param.ds_tensor = param.ds_tensor.detach()
+                param.ds_tensor.requires_grad = False
                 param_buffer = torch.empty(
                     math.ceil(param.ds_numel / self.world_size) * self.world_size,
                     dtype=param.dtype,
@@ -847,6 +847,7 @@ class Init(InsertPostInitMethodToModuleSubClasses):
                     param.ds_tensor.to(torch.cuda.current_device()),
                     param_buffer,
                     self.ds_process_group)
+                param.ds_tensor.requires_grad = True
                 param.data = param_buffer.narrow(0,
                                                  0,
                                                  param.ds_numel).view(param.ds_shape).to(
